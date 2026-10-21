@@ -283,6 +283,12 @@ input:focus {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.action-row > button {
+  padding-inline: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .manual-grid {
   grid-template-columns: minmax(0, 1.2fr) 84px auto;
   gap: 8px;
@@ -1203,3 +1209,7 @@ input {
     min-width: 135px;
   }
 }
+/* Standby setup stays compact in the scrollable device panel. */
+.wake-setup-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.wake-setup-row input { width: 100%; min-width: 0; }
+#wakeMessage:empty { display: none; }

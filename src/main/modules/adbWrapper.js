@@ -310,11 +310,13 @@ class AdbWrapper {
     };
   }
 
-  async connect(host, port = 5555) {
+  async connect(host, port = 5555, options = {}) {
     assertHost(host);
     assertPort(port);
     const target = `${host}:${Number(port)}`;
-    const result = await this.run(['connect', target], { timeoutMs: 30000, allowNonZero: true });
+    const timeoutMs = Number.isFinite(options.timeoutMs)
+      ? Math.max(100, Math.min(30000, options.timeoutMs)) : 30000;
+    const result = await this.run(['connect', target], { timeoutMs, allowNonZero: true });
     const message = [result.stdout, result.stderr].filter(Boolean).join('\n');
 
     if (/failed|unable|refused|cannot|error/i.test(message) || result.exitCode !== 0) {

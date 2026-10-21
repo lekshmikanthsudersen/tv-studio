@@ -32,6 +32,8 @@ contextBridge.exposeInMainWorld('androidTv', {
   captureScreenshot: (payload) => invoke('device:screenshot', payload),
   openScreenshot: (payload) => invoke('device:open-screenshot', payload),
   wakeDevice: (payload) => invoke('device:wake', payload),
+  getWakeProfiles: () => invoke('wake:profiles'),
+  saveWakeProfile: (payload) => invoke('wake:save-profile', payload),
   sleepDevice: (payload) => invoke('device:sleep', payload),
   rebootDevice: (payload) => invoke('device:reboot', payload),
   openDeviceSettings: (payload) => invoke('device:open-settings', payload),

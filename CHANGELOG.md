@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.2 — 2026-10-22
+
+- Wake TV is available beside Connect TV, including for saved TVs that are offline.
+- Remember the TV's network address and MAC while connected, with manual MAC entry when needed.
+- Send Wake-on-LAN packets and retry the connection for up to 20 seconds when ADB is unavailable.
+- Confirm the TV's awake state and distinguish an unconfirmed wake request from success.
+- Keep network wake settings locally across app restarts.
+
 ## 2.0.1 — 2026-10-22
 
 First public release.

@@ -21,6 +21,18 @@ Entering port `5555` does not enable debugging. Some TVs need a manufacturer-spe
 
 Use **Scan for TVs** to refresh discovery. Manual IP connection is useful when a reachable TV does not appear in the list.
 
+## Wake the TV from your PC
+
+1. Connect once while the TV is on. TV Studio remembers its network address and tries to detect the active Wi-Fi or Ethernet MAC address.
+2. On a Sony TV, enable **Settings → Network & Internet → Remote start → On (Powered on by apps)**. Some newer models use **System → Power & Energy → Energy Modes → Increased** instead; see [Sony's setup guidance](https://www.sony.co.uk/electronics/support/articles/00341655).
+3. When it is in standby, select your saved TV and click **Wake TV** beside **Connect TV**. The saved entry remains available after restarting TV Studio.
+
+If the MAC could not be detected, expand **Wake from standby**, enter the address from the TV's network settings, and click **Save**. Use the address for the connection the TV actually uses: Wi-Fi and Ethernet have different MAC addresses. Reconnect once if the TV's IP address or debugging port changes.
+
+Wake first tries the existing connection. If that fails, it sends network wake packets and retries the connection for up to 20 seconds. It reports whether Android confirms it is awake; sending packets alone is not confirmation. Wake uses a dedicated wake command, so pressing it again does not turn an awake TV off. It does not automatically open the live view.
+
+Network wake depends on the TV and router keeping the network reachable in standby. It cannot turn on a TV with its mains power disconnected. Some Wi-Fi or energy-saving modes still require the physical remote; the app does not change TV power settings automatically.
+
 ## Control the TV
 
 The live view opens in a separate window. Click it to send mouse and keyboard input to the TV. Resize or move it like any other desktop window, and use **Alt+Tab** to switch back to your work.

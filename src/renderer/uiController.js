@@ -3,6 +3,9 @@ const api = window.androidTv;
 const state = {
   discoveredDevices: [],
   adbDevices: [],
+  wakeProfiles: [],
+  wakeInFlight: false,
+  wakeTargetKey: '',
   selectedOption: null,
   selectedDevice: null,
   serial: '',
@@ -50,6 +53,9 @@ const els = {
   screenshotMessage: document.getElementById('screenshotMessage'),
   openScreenshotButton: document.getElementById('openScreenshotButton'),
   wakeButton: document.getElementById('wakeButton'),
+  wakeMessage: document.getElementById('wakeMessage'),
+  wakeMacInput: document.getElementById('wakeMacInput'),
+  saveWakeButton: document.getElementById('saveWakeButton'),
   sleepButton: document.getElementById('sleepButton'),
   settingsButton: document.getElementById('settingsButton'),
   devSettingsButton: document.getElementById('devSettingsButton'),
@@ -153,7 +159,7 @@ async function init() {
     }
   });
 
-  await loadSystemStatus();
+  await Promise.all([loadSystemStatus(), loadWakeProfiles()]);
   await scanDevices();
 }
 
@@ -170,7 +176,8 @@ function bindEvents() {
       els.screenshotMessage.textContent = `Couldn't open image: ${error.message || error}`;
     });
   });
-  els.wakeButton.addEventListener('click', () => runDeviceAction(() => api.wakeDevice({ serial: state.serial }), 'Wake sent').catch(showError));
+  els.wakeButton.addEventListener('click', () => wakeSelectedTv().catch(showError));
+  els.saveWakeButton.addEventListener('click', () => saveWakeSettings().catch(showError));
   els.sleepButton.addEventListener('click', () => runDeviceAction(() => api.sleepDevice({ serial: state.serial }), 'Sleep sent').catch(showError));
   els.settingsButton.addEventListener('click', () => runDeviceAction(() => api.openDeviceSettings({ serial: state.serial, target: 'settings' }), 'Settings opened').catch(showError));
   els.devSettingsButton.addEventListener('click', () => runDeviceAction(() => api.openDeviceSettings({ serial: state.serial, target: 'developer' }), 'Developer settings opened').catch(showError));
@@ -201,8 +208,11 @@ function bindEvents() {
   });
 
   els.deviceSelect.addEventListener('change', () => {
+    state.connectionGeneration += 1;
     state.selectedOption = findSelectedOption();
     hydratePairInputs(state.selectedOption);
+    hydrateWakeSettings();
+    els.wakeMessage.textContent = '';
   });
 
   document.querySelectorAll('.mode-button').forEach((button) => {
@@ -315,6 +325,7 @@ async function scanDevices() {
 
 function renderDeviceOptions() {
   const previous = els.deviceSelect.value;
+  const previousTarget = selectedWakeTarget();
   const options = [
     ...state.adbDevices.map((device) => ({
       id: device.id,
@@ -327,6 +338,12 @@ function renderDeviceOptions() {
       label: formatDiscoveredDeviceLabel(device),
       kind: 'mdns',
       device
+    })),
+    ...state.wakeProfiles.filter((profile) =>
+      !state.adbDevices.some((device) => device.serial === profile.serial) &&
+      !state.discoveredDevices.some((device) => (device.address || device.host) === profile.host)
+    ).map((device) => ({
+      id: device.id, label: `${device.name || device.host} · saved for wake`, kind: 'wake', device
     }))
   ];
 
@@ -338,6 +355,7 @@ function renderDeviceOptions() {
     option.textContent = 'No devices found';
     els.deviceSelect.appendChild(option);
     state.selectedOption = null;
+    hydrateWakeSettings();
     return;
   }
 
@@ -350,10 +368,14 @@ function renderDeviceOptions() {
 
   if (previous && options.some((item) => item.id === previous)) {
     els.deviceSelect.value = previous;
+  } else if (previousTarget?.serial) {
+    const sameTv = options.find((item) => wakeTargetForDevice(item.device).serial === previousTarget.serial);
+    if (sameTv) els.deviceSelect.value = sameTv.id;
   }
 
   state.selectedOption = findSelectedOption();
   hydratePairInputs(state.selectedOption);
+  hydrateWakeSettings();
 }
 
 function findSelectedOption() {
@@ -367,6 +389,9 @@ function findSelectedOption() {
   if (discovered) {
     return { id, kind: 'mdns', device: discovered };
   }
+
+  const saved = state.wakeProfiles.find((profile) => profile.id === id);
+  if (saved) return { id, kind: 'wake', device: saved };
 
   return null;
 }
@@ -432,6 +457,83 @@ async function manualConnect() {
   });
 }
 
+async function loadWakeProfiles() {
+  state.wakeProfiles = await api.getWakeProfiles();
+  renderDeviceOptions();
+}
+
+function selectedWakeTarget() {
+  const selected = state.selectedOption || findSelectedOption();
+  const device = selected?.device || state.selectedDevice;
+  if (!device) return null;
+  return wakeTargetForDevice(device);
+}
+
+function wakeTargetForDevice(device) {
+  const host = device.address || device.host || hostFromSerial(device.serial || '');
+  const saved = state.wakeProfiles.find((profile) => profile.serial === device.serial || profile.host === host);
+  const serialPort = String(device.serial || '').match(/:(\d+)$/)?.[1];
+  const port = device.services?.adbConnect?.port || device.port || Number(serialPort) || saved?.port || 5555;
+  return { ...saved, ...device, host, port, serial: device.serial || (host ? `${host}:${port}` : ''),
+    macAddress: device.macAddress || saved?.macAddress || '' };
+}
+
+function hydrateWakeSettings(force = false) {
+  const target = selectedWakeTarget();
+  const key = target?.serial || target?.host || '';
+  if (force || key !== state.wakeTargetKey) {
+    els.wakeMacInput.value = target?.macAddress || '';
+    state.wakeTargetKey = key;
+  }
+  els.wakeButton.disabled = state.wakeInFlight || !target;
+  els.saveWakeButton.disabled = !target || state.wakeInFlight;
+}
+
+async function saveWakeSettings() {
+  const target = selectedWakeTarget();
+  if (!target) throw new Error('Select a TV or connect to it once before saving wake settings.');
+  const profile = await api.saveWakeProfile({ ...target, macAddress: els.wakeMacInput.value.trim() });
+  state.wakeProfiles = [profile, ...state.wakeProfiles.filter((p) => p.id !== profile.id)];
+  renderDeviceOptions();
+  hydrateWakeSettings(true);
+  els.wakeMessage.textContent = 'TV remembered. Wake TV remains available when it goes offline.';
+  els.wakeMessage.className = 'message';
+}
+
+async function wakeSelectedTv() {
+  if (state.wakeInFlight) return;
+  const target = selectedWakeTarget();
+  if (!target) throw new Error('Select a saved TV or connect to it once while it is on.');
+  const generation = ++state.connectionGeneration;
+  let completionGeneration = generation;
+  state.wakeInFlight = true;
+  hydrateWakeSettings();
+  els.wakeButton.textContent = 'Waking…';
+  els.wakeMessage.textContent = 'Waking the TV and waiting for it to reconnect…';
+  els.wakeMessage.className = 'message';
+  try {
+    const result = await api.wakeDevice(target);
+    if (generation !== state.connectionGeneration || selectedWakeTarget()?.serial !== target.serial) return;
+    if (result.connected && result.profile) {
+      completionGeneration = generation + 1;
+      await selectDevice({ ...result.profile, address: result.profile.host }, { startControl: false });
+      if (state.connectionGeneration !== generation + 1) return;
+    }
+    els.wakeMessage.textContent = result.message;
+    els.wakeMessage.className = `message ${result.awakeConfirmed ? '' : 'warn'}`.trim();
+    setCommandStatus(result.awakeConfirmed ? 'TV awake' : 'Wake request finished');
+  } catch (error) {
+    if (completionGeneration !== state.connectionGeneration) return;
+    els.wakeMessage.textContent = error.message || String(error);
+    els.wakeMessage.className = 'message error';
+    throw error;
+  } finally {
+    state.wakeInFlight = false;
+    els.wakeButton.textContent = 'Wake TV';
+    hydrateWakeSettings();
+  }
+}
+
 async function connectSelected() {
   const selected = state.selectedOption || findSelectedOption();
   if (!selected) {
@@ -458,24 +560,39 @@ async function connectSelected() {
   const device = selected.device;
   const host = device.address || device.host;
   const service = device.services?.adbConnect;
+  const port = service?.port || device.port || 5555;
   if (!host) {
     throw new Error('Discovered device did not publish an address.');
   }
 
   const generation = ++state.connectionGeneration;
-  const result = await api.connectAdb({ host, port: service?.port || 5555 });
+  const result = await api.connectAdb({ host, port });
   if (generation !== state.connectionGeneration) return;
   await selectDevice({
     serial: result.serial,
     host: device.host,
     address: device.address,
-    port: service?.port || portFromSerial(result.serial),
+    port,
     services: device.services
   });
 }
 
-async function selectDevice(device) {
+async function selectDevice(device, { startControl = true } = {}) {
   const generation = ++state.connectionGeneration;
+  const previousSerial = state.serial;
+  const switchingWakeTarget = !startControl && previousSerial && previousSerial !== device.serial;
+  if (switchingWakeTarget) {
+    // A wake can select another TV without starting scrcpy, so explicitly
+    // retire the old TV's native and compatibility sessions before retargeting.
+    els.mirrorModeSelect.value = 'off';
+    await startMirror();
+    if (generation !== state.connectionGeneration) return;
+    await api.stopScrcpy({ serial: previousSerial });
+    if (generation !== state.connectionGeneration) return;
+    state.scrcpyRunning = false;
+    setControlOptionsDisabled(false);
+    setScrcpyStatus(state.scrcpyAvailable ? 'Interactive engine ready' : 'Interactive engine missing');
+  }
   const info = await api.selectDevice(device);
   if (generation !== state.connectionGeneration) return;
   state.selectedDevice = device;
@@ -485,8 +602,16 @@ async function selectDevice(device) {
   setStatus('Online', 'ok');
   els.selectedDeviceLabel.textContent = `${device.serial} - ${state.display.width}x${state.display.height}`;
   setMessage(deviceLabel(info));
+  if (!startControl && !state.scrcpyRunning && state.mirrorMode === 'off') {
+    setMirrorHint('TV ready for control', 'Choose Start control to open this TV, or use the remote buttons and tools.');
+  }
+  if (info.wakeProfile) {
+    state.wakeProfiles = [info.wakeProfile, ...state.wakeProfiles.filter((p) => p.id !== info.wakeProfile.id)];
+    renderDeviceOptions();
+    hydrateWakeSettings(true);
+  }
   await Promise.all([
-    startPreferredMirror(),
+    startControl ? startPreferredMirror() : Promise.resolve(),
     refreshApps(),
     refreshLaunchers().catch(() => null)
   ]);
@@ -494,6 +619,7 @@ async function selectDevice(device) {
 
 async function disconnect() {
   const generation = ++state.connectionGeneration;
+  els.wakeMessage.textContent = '';
   const serial = state.serial;
   state.mirrorMode = 'off';
   state.liveStreamToken += 1;
@@ -923,6 +1049,7 @@ async function captureScreenshot() {
 
 async function runDeviceAction(action, successMessage) {
   requireSerial();
+  els.wakeMessage.textContent = '';
   await action();
   setMessage(successMessage);
 }

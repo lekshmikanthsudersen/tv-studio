@@ -21,6 +21,7 @@ const DeviceDiscovery = require('./modules/deviceDiscovery');
 const StreamDecoder = require('./modules/streamDecoder');
 const HeartbeatWorker = require('./modules/heartbeatWorker');
 const ScrcpyController = require('./modules/scrcpyController');
+const WakeController = require('./modules/wakeController');
 
 let mainWindow;
 let adb;
@@ -28,6 +29,7 @@ let discovery;
 let streamDecoder;
 let heartbeat;
 let scrcpy;
+let wakeController;
 let quitting = false;
 let quitReady = false;
 let serviceCleanup = null;
@@ -125,7 +127,11 @@ function bindIpc() {
 
   handle('device:select', async (device) => {
     heartbeat.start(device);
-    return adb.getDeviceInfo(device.serial);
+    const info = await adb.getDeviceInfo(device.serial);
+    // A network profile is optional: USB control must keep working too.
+    const wakeProfile = info.state === 'device'
+      ? await wakeController.rememberDevice(device, info).catch(() => null) : null;
+    return { ...info, wakeProfile };
   });
 
   handle('device:info', async ({ serial }) => adb.getDeviceInfo(serial));
@@ -146,7 +152,16 @@ function bindIpc() {
     return true;
   });
 
-  handle('device:wake', async ({ serial }) => adb.wake(serial));
+  handle('device:wake', async (payload) => {
+    if (payload?.serial && !payload.host && !payload.address && !payload.serial.includes(':')) {
+      await adb.wake(payload.serial);
+      return { serial: payload.serial, connected: true, awakeConfirmed: false,
+        message: 'Wake command sent over USB. Display state has not been confirmed.' };
+    }
+    return wakeController.wake(payload);
+  });
+  handle('wake:profiles', async () => wakeController.getProfiles());
+  handle('wake:save-profile', async (payload) => wakeController.saveProfile(payload));
 
   handle('device:sleep', async ({ serial }) => adb.sleep(serial));
 
@@ -320,6 +335,9 @@ async function bootstrap() {
   const appRoot = path.resolve(__dirname, '..', '..');
 
   adb = new AdbWrapper({ appRoot, logger: console });
+  wakeController = new WakeController({
+    adb, filePath: path.join(app.getPath('userData'), 'wake-profiles.json'), logger: console
+  });
   streamDecoder = new StreamDecoder({ adb, appRoot, logger: console });
   discovery = new DeviceDiscovery({ adb, logger: console });
   heartbeat = new HeartbeatWorker({ adb, logger: console });
@@ -351,6 +369,7 @@ app.whenReady().then(bootstrap).catch((error) => {
 function stopServices() {
   if (serviceCleanup) return serviceCleanup;
   const stops = [
+    () => { if (quitting) wakeController?.stop(); },
     () => heartbeat?.stop(),
     () => adb?.cancelScreenshots(),
     () => discovery?.stop(),

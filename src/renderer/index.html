@@ -30,9 +30,10 @@
           <div class="action-row">
             <button id="connectButton" class="primary-button" type="button">Connect TV</button>
             <button id="disconnectButton" class="secondary-button" type="button">Disconnect</button>
-            <button id="resetAdbButton" class="secondary-button" type="button">Repair ADB</button>
+            <button id="wakeButton" class="secondary-button" type="button">Wake TV</button>
           </div>
           <div id="connectionMessage" class="message"></div>
+          <div id="wakeMessage" class="message" role="status" aria-live="polite"></div>
 
           <details class="connection-details">
             <summary>Pair or connect manually</summary>
@@ -48,6 +49,16 @@
               <input id="pairCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Pairing code" />
               <button id="pairButton" class="secondary-button" type="button">Pair TV</button>
             </div>
+          </details>
+          <details class="connection-details">
+            <summary>Wake from standby</summary>
+            <p class="hint">Connect once while the TV is on to remember it. On Sony TVs, enable Remote start under Network &amp; Internet (or Increased energy mode on newer models). Keep the TV plugged in and on the same home network.</p>
+            <label class="hint" for="wakeMacInput">TV Wi-Fi or Ethernet MAC address</label>
+            <div class="wake-setup-row">
+              <input id="wakeMacInput" type="text" autocomplete="off" spellcheck="false" maxlength="17" placeholder="Detected when connected" />
+              <button id="saveWakeButton" class="secondary-button" type="button">Save</button>
+            </div>
+            <p class="hint">If detection is unavailable, enter the address shown in the TV's network settings. Network wake depends on the TV's standby settings; it cannot power on an unplugged TV.</p>
           </details>
         </section>
 
@@ -86,7 +97,7 @@
           <div class="tool-grid">
             <button id="installApkButton" class="tool-button tool-accent" type="button">Install APK</button>
             <button id="screenshotButton" class="tool-button" type="button">Screenshot</button>
-            <button id="wakeButton" class="tool-button" type="button">Wake</button>
+            <button id="resetAdbButton" class="tool-button" type="button">Repair ADB</button>
             <button id="sleepButton" class="tool-button" type="button">Sleep</button>
             <button id="settingsButton" class="tool-button" type="button">Settings</button>
             <button id="devSettingsButton" class="tool-button" type="button">Developer</button>

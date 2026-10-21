@@ -18,6 +18,7 @@ Choose music, search in apps, browse the web, and switch what's on the TV with t
 - **A keyboard for TV searches.** Type a video title, artist, or web address instead of selecting each letter with the remote.
 - **More comfortable browsing.** Use your computer's mouse and keyboard in the TV's browser. Follow links, enter searches, and navigate pages while seeing the TV screen on your desktop.
 - **Quick app switching.** Open installed TV apps, return Home, or use Back and the directional controls without picking up another device.
+- **Wake from your desk.** Remember your TV once, then use **Wake TV** even when it is offline. Network wake requires a supported TV with network standby enabled.
 - **Your own TV setup.** Install APKs from your computer, try a custom launcher, and manage installed packages. Launcher selection depends on what your TV allows.
 - **Screenshots when you need them.** Save the TV screen as a PNG to explain a setting, document a setup, or share an error.
 

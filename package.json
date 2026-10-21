@@ -1,6 +1,6 @@
 {
   "name": "android-tv-zero-friction-controller",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Desktop Android TV studio with native low-latency scrcpy control, wireless ADB discovery, package installation, and device customization.",
   "main": "src/main/main.js",
   "private": true,
@@ -12,7 +12,7 @@
     "install:electron": "install-electron",
     "install:ffmpeg:win": "node scripts/install-ffmpeg-win.js",
     "install:scrcpy:win": "node scripts/install-scrcpy-win.js",
-    "test": "node scripts/contract-test.js && node scripts/device-discovery-test.js && node scripts/renderer-regression-test.js && node --test scripts/screenshot-backend-test.js scripts/scrcpy-controller-test.js scripts/main-lifecycle-test.js",
+    "test": "node scripts/contract-test.js && node scripts/device-discovery-test.js && node scripts/renderer-regression-test.js && node --test scripts/screenshot-backend-test.js scripts/scrcpy-controller-test.js scripts/main-lifecycle-test.js scripts/network-wake-test.js scripts/wake-controller-test.js scripts/renderer-wake-test.js",
     "test:layout": "electron scripts/renderer-layout-test.js 1 && electron scripts/renderer-layout-test.js 1.25 && electron scripts/renderer-layout-test.js 1.5",
     "package:win": "node scripts/package-win.js"
   },

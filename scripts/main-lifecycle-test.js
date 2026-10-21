@@ -25,6 +25,7 @@ function boot({ platform = 'win32', startGate, stopGate, stopFailure } = {}) {
     quitCalls: 0,
     terminated: false,
     whenReady: () => ready.promise,
+    getPath: () => '/test-profile',
     quit() {
       this.quitCalls += 1;
       const event = { prevented: false, preventDefault() { this.prevented = true; } };
@@ -67,6 +68,7 @@ function boot({ platform = 'win32', startGate, stopGate, stopFailure } = {}) {
       if (stopGate) await stopGate.promise;
     }
   }
+  class Wake { stop() {} }
   const modules = {
     path,
     electron: { app, BrowserWindow: Window, ipcMain: { handle: (name, handler) => handlers.set(name, handler) }, dialog: {}, shell: {} },
@@ -74,7 +76,8 @@ function boot({ platform = 'win32', startGate, stopGate, stopFailure } = {}) {
     './modules/deviceDiscovery': Discovery,
     './modules/streamDecoder': Stream,
     './modules/heartbeatWorker': Heartbeat,
-    './modules/scrcpyController': Scrcpy
+    './modules/scrcpyController': Scrcpy,
+    './modules/wakeController': Wake
   };
   const filename = path.resolve(__dirname, '../src/main/main.js');
   vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
