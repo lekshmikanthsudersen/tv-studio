@@ -1,35 +1,48 @@
 # Contributing to TV Studio
 
-TV Studio is a Windows desktop workflow around ADB and scrcpy. Improvements should preserve the native live-control window, predictable focus, and reliable process cleanup.
+Bug reports, documentation improvements, and testing on other TVs are welcome.
 
-## Development
+## Report an issue
 
-Use the setup steps in the README, then run:
+Include the TV Studio and Windows versions, TV model, Android version, connection method, and steps to reproduce the issue. Describe what you expected and what happened. Include a screenshot or error message when useful.
 
-```powershell
+Remove device addresses, serial numbers, pairing codes, account details, and personal screen content before sharing logs or screenshots. Never submit ADB keys or credentials.
+
+## Run the checks
+
+Complete the [source setup](README.md#run-from-source), then run:
+
+~~~powershell
 npm run check
 npm test
 npm run smoke
 npm run test:layout
-```
+~~~
 
-Keep changes focused. Reuse existing platform and scrcpy capabilities before adding dependencies. Test the behavior that changed, including cancellation and shutdown when working on live control or discovery. The Windows workflow checks the source, renderer, Electron startup, and portable packaging.
+The tests cover device discovery, input behavior, screenshots, session cleanup, and the connection between the interface and desktop process. The smoke check starts Electron. Layout checks cover two window sizes at 100%, 125%, and 150% display scaling.
 
-For hardware changes, record the TV model, Android version, connection method, and observed result. Distinguish configured frame-rate limits from measurements. Do not generalize one TV's behavior to every Android device.
+The [Windows workflow](https://github.com/lekshmikanthsudersen/tv-studio/actions/workflows/windows.yml) also checks installation and packaging. Changes involving the TV connection or input should be tested on a real device. Include the model and Android version in the pull request.
 
-## Reporting an issue
+## Build a portable Windows folder
 
-Include:
+~~~powershell
+npm run package:win
+~~~
 
-- TV Studio version and Windows version.
-- TV model, Android version, and connection method.
-- Exact steps, expected result, and actual result.
-- Relevant error text and a screenshot if helpful.
+Run the TVStudio.exe file in the dist/TVStudio-win32-x64 folder. Keep the entire folder together; it contains the desktop runtime, scrcpy, and ADB.
 
-Remove device addresses, serial numbers, pairing codes, account details, and personal screen content before sharing logs or screenshots. Never submit ADB keys or credentials.
+The scrcpy installer downloads version 4.1 from its official release and verifies its SHA-256 checksum. Electron is pinned in the dependency lockfile. Preserve their licenses when distributing a build.
 
-Some TV menus only implement remote navigation; compare mouse behavior with arrows and Enter when reporting an input issue.
+## Optional tools
 
-## Pull requests
+The legacy H.264 compatibility view can use a separate FFmpeg installation:
 
-Explain the user-visible problem, the resulting behavior, and how it was tested. Keep runtime binaries, dependency folders, device data, and generated builds out of commits. Preserve upstream notices when changing packaging.
+~~~powershell
+npm run install:ffmpeg:win
+~~~
+
+To use existing tool installations, set ANDROID_TV_CONTROLLER_ADB, ANDROID_TV_CONTROLLER_SCRCPY, or ANDROID_TV_CONTROLLER_FFMPEG to their executable paths.
+
+## Submit a change
+
+Explain the user-visible change and how it was tested. Keep runtime binaries, dependency folders, device data, and generated builds out of commits. Retain the [third-party notices](THIRD_PARTY_NOTICES.md).

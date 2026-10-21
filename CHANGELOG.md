@@ -2,15 +2,15 @@
 
 ## 2.0.1 — 2026-10-22
 
-Initial public source release of the repaired desktop controller.
+First public release.
 
-- Use scrcpy's decorated companion window with SDK mouse and keyboard input.
-- Fix D-pad alignment, checkbox sizing, and keyboard focus conflicts.
-- Bound compatibility key requests and serialize preview captures.
-- Validate screenshot PNG data, report errors, and open saved images from the app.
-- Wait for live-control shutdown before restart; cancel stale startup and connection work.
-- Clean up owned sessions on disconnect and application exit.
-- Add regression, layout, and lifecycle checks, with hardware verification on a Sony BRAVIA running Android 14.
-- Pin the desktop dependency and document a reproducible Windows source setup.
+- Live Android TV view with mouse and keyboard control on Windows.
+- TV discovery, wireless pairing, and manual IP connection.
+- Directional remote, Home, Back, volume, and playback controls.
+- PNG screenshots with an option to open the saved image.
+- Installation of one or more APKs from the computer.
+- App launching, package management, and custom launcher selection.
+- Display quality options and optional audio forwarding to the PC.
+- Source setup instructions and a portable Windows build command.
 
-Free My TV remains a separate optional launcher. It is not part of this release.
+Tested on a Sony BRAVIA VU3 running Android 14.

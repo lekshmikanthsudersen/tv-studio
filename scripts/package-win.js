@@ -18,6 +18,9 @@ const requiredRuntimeFiles = [
   'scrcpy',
   'package.json',
   'README.md',
+  'docs',
+  'CONTRIBUTING.md',
+  'CHANGELOG.md',
   'LICENSE',
   'THIRD_PARTY_NOTICES.md'
 ];
