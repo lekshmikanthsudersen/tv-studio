@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: http://127.0.0.1:*; media-src 'self' http://127.0.0.1:* blob:; connect-src 'self' http://127.0.0.1:*;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TV Studio</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="left-pane">
+        <section class="panel connection-panel hero-panel">
+          <div class="brand-lockup">
+            <span class="brand-mark">TV</span>
+            <div>
+              <p class="eyebrow">TV Studio</p>
+              <h1>Android TV, on your laptop</h1>
+            </div>
+            <span id="statusPill" class="status-pill status-idle">Idle</span>
+          </div>
+
+          <div class="device-row">
+            <select id="deviceSelect" aria-label="Android TV device"></select>
+            <button id="scanButton" class="icon-button" type="button" title="Scan for TVs" aria-label="Scan for TVs">↻</button>
+          </div>
+          <div class="action-row">
+            <button id="connectButton" class="primary-button" type="button">Connect TV</button>
+            <button id="disconnectButton" class="secondary-button" type="button">Disconnect</button>
+            <button id="resetAdbButton" class="secondary-button" type="button">Repair ADB</button>
+          </div>
+          <div id="connectionMessage" class="message"></div>
+
+          <details class="connection-details">
+            <summary>Pair or connect manually</summary>
+            <p class="hint">Use the connect port shown on the TV's Wireless debugging screen. The pairing port is different.</p>
+            <div class="manual-grid">
+              <input id="manualHostInput" type="text" autocomplete="off" spellcheck="false" placeholder="TV IP address" />
+              <input id="manualPortInput" type="number" min="1" max="65535" value="5555" placeholder="Connect port" />
+              <button id="manualConnectButton" class="secondary-button" type="button">IP Connect</button>
+            </div>
+            <div class="pair-grid">
+              <input id="pairHostInput" type="text" autocomplete="off" spellcheck="false" placeholder="TV IP" />
+              <input id="pairPortInput" type="number" min="1" max="65535" placeholder="Pair port" />
+              <input id="pairCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Pairing code" />
+              <button id="pairButton" class="secondary-button" type="button">Pair TV</button>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel remote-panel">
+          <div class="section-head compact">
+            <div><p class="eyebrow">Instant remote</p><h2>Navigation</h2></div>
+            <span class="mini-status">Arrow keys work</span>
+          </div>
+          <div class="remote-layout">
+            <div class="dpad-shell" aria-label="Directional pad">
+              <button class="dpad-button dpad-up" data-key="KEYCODE_DPAD_UP" type="button" aria-label="Up">↑</button>
+              <button class="dpad-button dpad-left" data-key="KEYCODE_DPAD_LEFT" type="button" aria-label="Left">←</button>
+              <button class="dpad-button dpad-center" data-key="KEYCODE_DPAD_CENTER" type="button" aria-label="OK">OK</button>
+              <button class="dpad-button dpad-right" data-key="KEYCODE_DPAD_RIGHT" type="button" aria-label="Right">→</button>
+              <button class="dpad-button dpad-down" data-key="KEYCODE_DPAD_DOWN" type="button" aria-label="Down">↓</button>
+            </div>
+            <div class="quick-remote">
+              <button data-key="KEYCODE_BACK" class="remote-button" type="button">Back</button>
+              <button data-key="KEYCODE_HOME" class="remote-button" type="button">Home</button>
+              <button data-key="KEYCODE_MENU" class="remote-button" type="button">Menu</button>
+              <button data-key="KEYCODE_POWER" class="remote-button" type="button">Power</button>
+            </div>
+          </div>
+          <div class="media-grid compact-media">
+            <button data-key="KEYCODE_VOLUME_DOWN" class="media-button" type="button">Vol −</button>
+            <button data-key="KEYCODE_VOLUME_MUTE" class="media-button" type="button">Mute</button>
+            <button data-key="KEYCODE_VOLUME_UP" class="media-button" type="button">Vol +</button>
+            <button data-key="KEYCODE_MEDIA_REWIND" class="media-button" type="button">Rewind</button>
+            <button data-key="KEYCODE_MEDIA_PLAY_PAUSE" class="media-button" type="button">Play</button>
+            <button data-key="KEYCODE_MEDIA_FAST_FORWARD" class="media-button" type="button">Forward</button>
+          </div>
+        </section>
+
+        <section class="panel tools-panel">
+          <div class="section-head compact"><div><p class="eyebrow">Device</p><h2>Tools & packages</h2></div></div>
+          <div class="tool-grid">
+            <button id="installApkButton" class="tool-button tool-accent" type="button">Install APK</button>
+            <button id="screenshotButton" class="tool-button" type="button">Screenshot</button>
+            <button id="wakeButton" class="tool-button" type="button">Wake</button>
+            <button id="sleepButton" class="tool-button" type="button">Sleep</button>
+            <button id="settingsButton" class="tool-button" type="button">Settings</button>
+            <button id="devSettingsButton" class="tool-button" type="button">Developer</button>
+            <button id="animOffButton" class="tool-button" type="button">Faster UI</button>
+            <button id="animOnButton" class="tool-button" type="button">Restore UI</button>
+            <button id="rebootButton" class="tool-button danger" type="button">Reboot</button>
+          </div>
+          <div class="screenshot-result" aria-live="polite">
+            <span id="screenshotMessage"></span>
+            <button id="openScreenshotButton" class="mini-button" type="button" hidden>Open image</button>
+          </div>
+        </section>
+
+        <details class="panel management-panel">
+          <summary>Advanced customization</summary>
+          <div class="management-content">
+            <div class="section-head compact">
+              <div><p class="eyebrow">Custom home</p><h2>Launcher</h2></div>
+              <button id="refreshLaunchersButton" class="icon-button" type="button" title="Refresh launchers">↻</button>
+            </div>
+            <div class="launcher-grid">
+              <button id="installLauncherButton" class="secondary-button" type="button">Install launcher APK</button>
+              <button id="setLauncherButton" class="secondary-button" type="button">Set as Home</button>
+            </div>
+            <select id="launcherSelect" aria-label="Home launcher"></select>
+            <div id="launcherMessage" class="message"></div>
+
+            <div class="section-head compact management-divider">
+              <div><p class="eyebrow">App manager</p><h2>Installed packages</h2></div>
+              <button id="loadPackagesButton" class="icon-button" type="button" title="Load packages">↻</button>
+            </div>
+            <div class="package-row">
+              <input id="packageInput" type="text" autocomplete="off" spellcheck="false" placeholder="package.name" />
+              <select id="packageScopeSelect" aria-label="Package scope">
+                <option value="thirdParty">User</option><option value="disabled">Disabled</option>
+                <option value="system">System</option><option value="all">All</option>
+              </select>
+            </div>
+            <div class="package-row spaced">
+              <input id="packageSearchInput" type="text" autocomplete="off" spellcheck="false" placeholder="Filter packages" />
+              <button id="backupButton" class="secondary-button" type="button">Backup</button>
+            </div>
+            <div class="package-actions">
+              <button id="forceStopButton" class="secondary-button" type="button">Stop</button>
+              <button id="disablePackageButton" class="secondary-button" type="button">Disable</button>
+              <button id="enablePackageButton" class="secondary-button" type="button">Enable</button>
+              <button id="removePackageButton" class="secondary-button danger" type="button">Remove</button>
+              <button id="clearDataButton" class="secondary-button danger" type="button">Clear data</button>
+            </div>
+            <button id="restoreBackupButton" class="secondary-button full-button" type="button">Restore disabled packages</button>
+            <div id="packageList" class="package-list"></div>
+          </div>
+        </details>
+
+        <section class="panel apps-panel">
+          <div class="section-head compact">
+            <div><p class="eyebrow">Library</p><h2>TV apps</h2></div>
+            <button id="refreshAppsButton" class="icon-button" type="button" title="Refresh apps">↻</button>
+          </div>
+          <div id="appGrid" class="app-grid"></div>
+        </section>
+      </aside>
+
+      <section class="right-pane">
+        <header class="live-control-bar">
+          <div class="live-identity">
+            <span class="live-kicker">TV window</span>
+            <strong>Live Control</strong>
+            <span id="scrcpyStatusPill" class="stream-pill">Engine checking</span>
+          </div>
+          <div class="live-actions">
+            <select id="scrcpyQualitySelect" aria-label="Interactive mirror quality">
+              <option value="speed">Speed · 720p60</option>
+              <option value="balanced">Balanced · 1080p60</option>
+              <option value="quality">Quality · 1440p60</option>
+            </select>
+            <label class="toggle-chip" title="Forward TV audio on Android 11 and newer">
+              <input id="scrcpyAudioToggle" type="checkbox" /><span>Audio</span>
+            </label>
+            <button id="startScrcpyButton" class="primary-button" type="button">Start control</button>
+            <button id="stopScrcpyButton" class="secondary-button" type="button">Stop</button>
+          </div>
+        </header>
+
+        <div class="runtime-bar">
+          <span id="selectedDeviceLabel">No device</span>
+          <span id="ffmpegStatusLabel">Runtime checking</span>
+          <span id="commandStatusLabel">Ready for a TV</span>
+        </div>
+
+        <div id="mirrorStage" class="mirror-stage mode-dpad" tabindex="0">
+          <video id="mirrorVideo" autoplay muted playsinline></video>
+          <img id="snapshotImage" alt="Android TV fallback preview" />
+          <div id="trackSurface" class="track-surface"></div>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-state-content">
+              <span class="empty-orbit">TV</span>
+              <strong id="mirrorHintTitle">Connect your Android TV</strong>
+              <small id="mirrorHintText">Live control opens in its own TV window. Keep this panel nearby for remote buttons and tools.</small>
+            </div>
+          </div>
+        </div>
+
+        <footer class="text-injector">
+          <div class="typing-label"><strong>Type to TV</strong><small>Useful with compatibility input</small></div>
+          <label class="toggle-chip" title="Focus this box after tapping the fallback preview">
+            <input id="autoTypeToggle" type="checkbox" checked /><span>Auto focus</span>
+          </label>
+          <input id="textInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type text, then press Enter" />
+          <button id="sendTextButton" class="primary-button" type="button">Send text</button>
+        </footer>
+
+        <details class="fallback-panel">
+          <summary>Compatibility mirror and ADB trackpad</summary>
+          <div class="mirror-toolbar">
+            <div class="mode-switch" role="tablist" aria-label="Fallback input mode">
+              <button class="mode-button active" data-mode="dpad" type="button" role="tab" aria-selected="true">D-Pad</button>
+              <button class="mode-button" data-mode="trackpad" type="button" role="tab" aria-selected="false">Trackpad</button>
+              <button class="mode-button" data-mode="media" type="button" role="tab" aria-selected="false">Media</button>
+            </div>
+            <div class="stream-controls">
+              <span id="streamStatusPill" class="stream-pill">Fallback idle</span>
+              <select id="mirrorModeSelect" aria-label="Fallback mirror mode">
+                <option value="off">Off</option><option value="snapshot">Reliable snapshots</option><option value="h264">Legacy H.264</option>
+              </select>
+              <select id="streamSizeSelect" aria-label="Stream size">
+                <option value="1280x720">720p</option><option value="960x540">540p</option><option value="1920x1080">1080p</option>
+              </select>
+              <select id="streamFpsSelect" aria-label="Frame cap"><option value="30">30 FPS</option><option value="60">60 FPS</option></select>
+              <label class="toggle-chip"><input id="mouseMoveToggle" type="checkbox" /><span>ADB mouse</span></label>
+              <button id="restartMirrorButton" class="secondary-button mirror-restart" type="button">Restart fallback</button>
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+    <script type="module" src="./uiController.js"></script>
+  </body>
+</html>

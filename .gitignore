@@ -1,0 +1,40 @@
+# Dependencies and downloaded third-party runtimes
+/node_modules/
+/scrcpy/
+/platform-tools/
+/bin/
+/cache/
+
+# Generated builds, scratch work and local diagnostics
+/dist/
+/out/
+/tmp/
+/work/
+/outputs/
+/screenshots/
+/diagnostics/
+/AndroidTVController/
+*.log
+*.apk
+*.apks
+*.aab
+
+# Local agent/editor state and credentials
+/.agents/
+/.codex/
+/.idea/
+/.vscode/
+.env
+.env.*
+!.env.example
+adbkey
+adbkey.pub
+*.pem
+*.key
+*.keystore
+*.jks
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

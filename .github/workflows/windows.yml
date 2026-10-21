@@ -1,0 +1,38 @@
+name: Windows
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install pinned Electron runtime
+        run: npm run install:electron
+      - name: Install verified scrcpy and ADB runtime
+        run: npm run install:scrcpy:win
+      - name: Check syntax
+        run: npm run check
+      - name: Run regression tests
+        run: npm test
+      - name: Check layouts at supported display scales
+        run: npm run test:layout
+      - name: Smoke-test desktop startup
+        run: npm run smoke
+      - name: Verify portable packaging
+        run: npm run package:win
